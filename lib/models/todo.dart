@@ -73,6 +73,7 @@ class TodoModel extends ChangeNotifier {
     tz.initializeTimeZones();
     _loadTodos();
     _initializeRepeatingTodos();
+    _startPeriodicUpdate();
   }
 
   List<Todo> get todos => _todos;
@@ -149,11 +150,12 @@ class TodoModel extends ChangeNotifier {
   void _initializeRepeatingTodos() {
     Timer.periodic(Duration(minutes: 1), (timer) {
       final now = DateTime.now();
-      for (final todo in _todos) {
+      for (int i = 0; i < _todos.length; i++) {
+        final todo = _todos[i];
         if (todo.isRepeatingDaily && todo.dateTime.isBefore(now) && !todo.isDone) {
           final newDateTime = todo.dateTime.add(Duration(days: 1));
-          _todos[_todos.indexOf(todo)] = todo.copyWith(dateTime: newDateTime, isDone: false);
-          _scheduleNotification(_todos[_todos.indexOf(todo)], isNew: true);
+          _todos[i] = todo.copyWith(dateTime: newDateTime, isDone: false);
+          _scheduleNotification(_todos[i], isNew: true);
         }
       }
       _saveTodos();
@@ -165,8 +167,7 @@ class TodoModel extends ChangeNotifier {
     final notificationId = DateTime.now().millisecondsSinceEpoch.toString().hashCode;
     final tz.TZDateTime scheduledDate = tz.TZDateTime.from(todo.dateTime, tz.local);
 
-    const AndroidNotificationDetails androidPlatformChannelSpecifics =
-    AndroidNotificationDetails(
+    const AndroidNotificationDetails androidPlatformChannelSpecifics = AndroidNotificationDetails(
       'todo_channel', // channel ID
       'Todo Notifications', // channel name
       channelDescription: 'Notification channel for todo reminders',
@@ -179,8 +180,17 @@ class TodoModel extends ChangeNotifier {
       autoCancel: false,
     );
 
-    const NotificationDetails platformChannelSpecifics =
-    NotificationDetails(android: androidPlatformChannelSpecifics);
+    const IOSNotificationDetails iOSPlatformChannelSpecifics = IOSNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+      sound: "default",
+    );
+
+    const NotificationDetails platformChannelSpecifics = NotificationDetails(
+      android: androidPlatformChannelSpecifics,
+      iOS: iOSPlatformChannelSpecifics,
+    );
 
     await flutterLocalNotificationsPlugin.zonedSchedule(
       notificationId, // Unique ID for the notification
@@ -211,5 +221,11 @@ class TodoModel extends ChangeNotifier {
         _todos.add(Todo.fromJson(json));
       }
     }
+  }
+
+  void _startPeriodicUpdate() {
+    Timer.periodic(Duration(minutes: 1), (timer) {
+      notifyListeners();
+    });
   }
 }

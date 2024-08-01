@@ -1,11 +1,11 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/todo.dart';
 import '../widgets/todo_item.dart';
 import 'add_todo_screen.dart';
 import 'completed_todo_screen.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'edit_todo_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -16,32 +16,21 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  Future<void> _requestAlarmPermission(BuildContext context) async {
-    if (await Permission.scheduleExactAlarm.isDenied) {
-      await Permission.scheduleExactAlarm.request();
-    }
-    if (await Permission.scheduleExactAlarm.isGranted) {
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return const AddTodoScreen();
-        },
-      );
-    } else {
-      showDialog(
-        context: context,
-        builder: (BuildContext context) => AlertDialog(
-          title: const Text("Permission Needed"),
-          content: const Text("This app needs alarm permissions to schedule reminders."),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text("OK"),
-            ),
-          ],
-        ),
-      );
-    }
+  late Timer _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    // 주기적으로 상태 업데이트
+    _timer = Timer.periodic(Duration(seconds: 20), (timer) {
+      setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
   }
 
   @override
@@ -54,7 +43,14 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
-            onPressed: () => _requestAlarmPermission(context),
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return const AddTodoScreen();
+                },
+              );
+            },
           ),
           IconButton(
             icon: const Icon(Icons.check_circle),

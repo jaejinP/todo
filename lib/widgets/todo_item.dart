@@ -53,7 +53,9 @@ class TodoItem extends StatelessWidget {
           children: [
             Checkbox(
               value: todo.isDone,
-              onChanged: onToggle != null ? (value) => onToggle!() : null, // Disable checkbox if onToggle is null
+              onChanged: onToggle != null
+                  ? (value) => onToggle!()
+                  : null, // Disable checkbox if onToggle is null
             ),
             Expanded(
               child: Column(
@@ -63,7 +65,8 @@ class TodoItem extends StatelessWidget {
                     todo.title,
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      decoration: todo.isDone ? TextDecoration.lineThrough : null,
+                      decoration:
+                          todo.isDone ? TextDecoration.lineThrough : null,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -88,7 +91,8 @@ class TodoItem extends StatelessWidget {
                   ),
                 IconButton(
                   icon: Icon(Icons.delete),
-                  onPressed: () => _confirmDelete(context), // Call delete confirmation
+                  onPressed: () =>
+                      _confirmDelete(context), // Call delete confirmation
                 ),
               ],
             ),
@@ -98,4 +102,3 @@ class TodoItem extends StatelessWidget {
     );
   }
 }
-

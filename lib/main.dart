@@ -40,7 +40,8 @@ class HomeScreenWrapper extends StatefulWidget {
 }
 
 class _HomeScreenWrapperState extends State<HomeScreenWrapper> {
-  FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
 
   @override
   void initState() {
@@ -49,10 +50,25 @@ class _HomeScreenWrapperState extends State<HomeScreenWrapper> {
   }
 
   void _initializeNotifications() async {
-    const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    final InitializationSettings initializationSettings = InitializationSettings(
+    final IOSInitializationSettings initializationSettingsIOS =
+        IOSInitializationSettings(
+      requestAlertPermission: true,
+      requestBadgePermission: true,
+      requestSoundPermission: true,
+      onDidReceiveLocalNotification:
+          (int id, String? title, String? body, String? payload) async {
+        // Handle iOS local notification received
+        print("Received iOS local notification: $title $body $payload");
+      },
+    );
+
+    final InitializationSettings initializationSettings =
+        InitializationSettings(
       android: initializationSettingsAndroid,
+      iOS: initializationSettingsIOS,
     );
 
     await flutterLocalNotificationsPlugin.initialize(
@@ -68,11 +84,24 @@ class _HomeScreenWrapperState extends State<HomeScreenWrapper> {
   }
 
   void _requestPermissions() async {
-    final bool result = await flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
-        ?.requestPermission() ?? false;
+    final bool? androidResult = await flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.requestPermission();
 
-    if (!result) {
+    final IOSFlutterLocalNotificationsPlugin? iosImplementation =
+        flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin>();
+
+    if (iosImplementation != null) {
+      iosImplementation.requestPermissions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+    }
+
+    if (androidResult == false) {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
