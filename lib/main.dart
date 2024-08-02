@@ -32,7 +32,6 @@ Future<void> _initializeNotifications(
     requestSoundPermission: true,
     onDidReceiveLocalNotification:
         (int id, String? title, String? body, String? payload) async {
-      // Handle iOS local notification received
       print("Received iOS local notification: $title $body $payload");
     },
   );
@@ -50,46 +49,6 @@ Future<void> _initializeNotifications(
       }
     },
   );
-
-  await _requestPermissions(flutterLocalNotificationsPlugin);
-}
-
-Future<void> _requestPermissions(
-    FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin) async {
-  final bool? androidResult = await flutterLocalNotificationsPlugin
-      .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>()
-      ?.requestPermission();
-
-  final IOSFlutterLocalNotificationsPlugin? iosImplementation =
-      flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
-          IOSFlutterLocalNotificationsPlugin>();
-
-  if (iosImplementation != null) {
-    iosImplementation.requestPermissions(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
-  }
-
-  if (androidResult == false) {
-    showDialog(
-      context: navigatorKey.currentContext!,
-      builder: (context) => AlertDialog(
-        title: Text('알림 권한 필요'),
-        content: Text('이 앱에서 알림을 보내기 위해 권한이 필요합니다. 설정에서 알림 권한을 허용해 주세요.'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            child: Text('확인'),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();

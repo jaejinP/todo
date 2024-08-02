@@ -161,25 +161,6 @@ class TodoModel extends ChangeNotifier {
     });
   }
 
-  Future<void> requestNotificationPermissions() async {
-    const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
-
-    final IOSInitializationSettings initializationSettingsIOS =
-        IOSInitializationSettings(
-            requestAlertPermission: true,
-            requestBadgePermission: true,
-            requestSoundPermission: true,
-        );
-
-    final InitializationSettings initializationSettings = InitializationSettings(
-      android: initializationSettingsAndroid,
-      iOS: initializationSettingsIOS,
-    );
-
-    await flutterLocalNotificationsPlugin.initialize(initializationSettings);
-  }
-
   void _scheduleNotification(Todo todo, {bool isNew = false}) async {
     final notificationId = todo.id.hashCode & 0x7FFFFFFF;
     final tz.TZDateTime scheduledDate = tz.TZDateTime.from(todo.dateTime, tz.local);
@@ -211,7 +192,7 @@ class TodoModel extends ChangeNotifier {
     await flutterLocalNotificationsPlugin.zonedSchedule(
       notificationId, // Unique ID for the notification
       'Todo Notification',
-      '${todo.title}',
+      '\u{1F525} ${todo.title} \u{1F525}',
       scheduledDate,
       platformChannelSpecifics,
       androidAllowWhileIdle: true,

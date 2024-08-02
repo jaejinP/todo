@@ -74,7 +74,7 @@ class TodoItem extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   Text(
-                    'Due: ${DateFormat.yMd().add_Hm().format(todo.dateTime)}', // 24-hour format
+                    'Due: ${DateFormat('yyyy/MM/dd').add_Hm().format(todo.dateTime)}', // 24-hour format
                     overflow: TextOverflow.ellipsis,
                   ),
                   Text(

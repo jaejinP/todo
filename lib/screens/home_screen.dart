@@ -20,16 +20,16 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _requestPermissionsOnce();
+    // _requestPermissionsOnce();
     // 주기적으로 상태 업데이트
     _timer = Timer.periodic(Duration(seconds: 1), (timer) {
       setState(() {});
     });
   }
 
-  Future<void> _requestPermissionsOnce() async {
-    await Provider.of<TodoModel>(context, listen: false).requestNotificationPermissions();
-  }
+  // Future<void> _requestPermissionsOnce() async {
+  //   await Provider.of<TodoModel>(context, listen: false).requestNotificationPermissions();
+  // }
 
   @override
   void dispose() {
