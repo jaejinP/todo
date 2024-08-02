@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/todo.dart';
@@ -21,10 +20,15 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    _requestPermissionsOnce();
     // 주기적으로 상태 업데이트
-    _timer = Timer.periodic(Duration(seconds: 20), (timer) {
+    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
       setState(() {});
     });
+  }
+
+  Future<void> _requestPermissionsOnce() async {
+    await Provider.of<TodoModel>(context, listen: false).requestNotificationPermissions();
   }
 
   @override
@@ -70,6 +74,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: TodoCategory(
               title: 'Daily repeat',
               filter: (todo) => todo.isRepeatingDaily && !todo.isDone,
+              showCheckbox: false, // 체크박스를 숨김
             ),
           ),
           Expanded(
@@ -93,9 +98,10 @@ class _HomeScreenState extends State<HomeScreen> {
 class TodoCategory extends StatelessWidget {
   final String title;
   final bool Function(Todo) filter;
+  final bool showCheckbox; // 추가된 매개변수
   final ScrollController _scrollController = ScrollController();
 
-  TodoCategory({Key? key, required this.title, required this.filter}) : super(key: key);
+  TodoCategory({Key? key, required this.title, required this.filter, this.showCheckbox = true}) : super(key: key); // 기본값 true
 
   @override
   Widget build(BuildContext context) {
@@ -131,6 +137,7 @@ class TodoCategory extends StatelessWidget {
                             return EditTodoScreen(todo: todo);
                           },
                         ),
+                        showCheckbox: showCheckbox, // 전달된 매개변수 사용
                       );
                     },
                   ),

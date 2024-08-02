@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../models/todo.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter/cupertino.dart';
+import '../models/todo.dart';
 
 class AddTodoScreen extends StatefulWidget {
   const AddTodoScreen({Key? key}) : super(key: key);
@@ -12,8 +13,8 @@ class AddTodoScreen extends StatefulWidget {
 
 class _AddTodoScreenState extends State<AddTodoScreen> {
   final TextEditingController _titleController = TextEditingController();
-  DateTime _selectedDate = DateTime.now().add(Duration(hours: 1));
-  TimeOfDay _selectedTime = TimeOfDay.fromDateTime(DateTime.now());
+  DateTime _selectedDate = DateTime.now().add(Duration(hours: 1)); // 초기 날짜와 시간 설정
+  TimeOfDay _selectedTime = TimeOfDay.fromDateTime(DateTime.now().add(Duration(hours: 1)));
   String _priority = 'Medium';
   bool _isRepeatingDaily = false;
 
@@ -31,22 +32,24 @@ class _AddTodoScreenState extends State<AddTodoScreen> {
     }
   }
 
-  Future<void> _selectTime(BuildContext context) async {
-    final TimeOfDay? picked = await showTimePicker(
+  void _selectTime(BuildContext context) {
+    showModalBottomSheet(
       context: context,
-      initialTime: _selectedTime,
-      builder: (BuildContext context, Widget? child) {
-        return MediaQuery(
-          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
-          child: child!,
+      builder: (BuildContext builder) {
+        return Container(
+          height: MediaQuery.of(context).copyWith().size.height / 3,
+          child: CupertinoTimerPicker(
+            mode: CupertinoTimerPickerMode.hm,
+            initialTimerDuration: Duration(hours: _selectedTime.hour, minutes: _selectedTime.minute),
+            onTimerDurationChanged: (Duration newDuration) {
+              setState(() {
+                _selectedTime = TimeOfDay(hour: newDuration.inHours, minute: newDuration.inMinutes % 60);
+              });
+            },
+          ),
         );
       },
     );
-    if (picked != null && picked != _selectedTime) {
-      setState(() {
-        _selectedTime = picked;
-      });
-    }
   }
 
   String _formatTimeOfDay(TimeOfDay time) {
@@ -89,45 +92,51 @@ class _AddTodoScreenState extends State<AddTodoScreen> {
     return AlertDialog(
       key: const Key('addTodoDialog'),
       title: Text('Add Todo'),
-      content: SingleChildScrollView(
+      content: SingleChildScrollView( // 키보드가 올라올 때 스크롤 가능하도록 설정
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            TextField(
-              key: const Key('titleField'),
-              controller: _titleController,
-              decoration: InputDecoration(
-                labelText: 'Title',
-                border: OutlineInputBorder(),
+            Container(
+              width: double.infinity, // 가로 길이 설정 (화면 가득)
+              height: 50.0, // 세로 길이 설정
+              child: TextField(
+                key: const Key('titleField'),
+                controller: _titleController,
+                decoration: InputDecoration(
+                  labelText: 'Title',
+                  border: OutlineInputBorder(),
+                ),
               ),
             ),
-            const SizedBox(height: 16.0),
+            const SizedBox(height: 10.0),
             Row(
               children: <Widget>[
-                Expanded(
+                Flexible(
+                  flex: 3, // 연월일 텍스트 박스의 가로 길이를 늘림
                   child: GestureDetector(
                     onTap: () => _selectDate(context),
                     child: Container(
-                      padding: EdgeInsets.symmetric(vertical: 16.0),
+                      padding: EdgeInsets.symmetric(vertical: 10.0),
                       decoration: BoxDecoration(
                         border: Border.all(color: Colors.grey),
                         borderRadius: BorderRadius.circular(4.0),
                       ),
                       child: Center(
                         child: Text(
-                          DateFormat.yMd().format(_selectedDate),
+                          DateFormat('yyyy/MM/dd').format(_selectedDate), // 년/월/일 형식으로 표시
                           style: TextStyle(fontSize: 16.0),
                         ),
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 16.0),
-                Expanded(
+                const SizedBox(width: 10.0),
+                Flexible(
+                  flex: 2, // 시간 텍스트 박스의 가로 길이를 줄임
                   child: GestureDetector(
                     onTap: () => _selectTime(context),
                     child: Container(
-                      padding: EdgeInsets.symmetric(vertical: 16.0),
+                      padding: EdgeInsets.symmetric(vertical: 10.0),
                       decoration: BoxDecoration(
                         border: Border.all(color: Colors.grey),
                         borderRadius: BorderRadius.circular(4.0),
@@ -146,40 +155,55 @@ class _AddTodoScreenState extends State<AddTodoScreen> {
             const SizedBox(height: 16.0),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Priority',
-                  style: TextStyle(fontSize: 16.0),
-                ),
-                DropdownButton<String>(
-                  value: _priority,
-                  onChanged: (String? newValue) {
-                    setState(() {
-                      _priority = newValue!;
-                    });
-                  },
-                  items: <String>['High', 'Medium', 'Low']
-                      .map<DropdownMenuItem<String>>((String value) {
-                    return DropdownMenuItem<String>(
-                      value: value,
-                      child: Text(value),
-                    );
-                  }).toList(),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16.0),
-            Row(
               children: <Widget>[
-                Checkbox(
-                  value: _isRepeatingDaily,
-                  onChanged: (bool? newValue) {
-                    setState(() {
-                      _isRepeatingDaily = newValue!;
-                    });
-                  },
+                Flexible(
+                  flex: 1,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: <Widget>[
+                      Text('Priority', style: TextStyle(fontSize: 16.0)),
+                      DropdownButton<String>(
+                        value: _priority,
+                        onChanged: (String? newValue) {
+                          setState(() {
+                            _priority = newValue!;
+                          });
+                        },
+                        isExpanded: true, // DropdownButton의 너비를 최대화
+                        alignment: Alignment.center, // 텍스트를 가운데 정렬
+                        items: <String>['High', 'Medium', 'Low']
+                            .map<DropdownMenuItem<String>>((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Center(child: Text(value)), // 가운데 정렬
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ),
                 ),
-                Text('Repeat Daily'),
+                Flexible(
+                  flex: 1,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: <Widget>[
+                      Text('Repeat Daily', style: TextStyle(fontSize: 16.0)),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          Checkbox(
+                            value: _isRepeatingDaily,
+                            onChanged: (bool? newValue) {
+                              setState(() {
+                                _isRepeatingDaily = newValue!;
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ],

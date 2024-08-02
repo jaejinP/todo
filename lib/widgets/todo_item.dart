@@ -8,6 +8,7 @@ class TodoItem extends StatelessWidget {
   final VoidCallback onDelete;
   final VoidCallback onEdit;
   final bool showEditButton;
+  final bool showCheckbox; // 추가된 매개변수
 
   const TodoItem({
     Key? key,
@@ -16,6 +17,7 @@ class TodoItem extends StatelessWidget {
     required this.onDelete,
     required this.onEdit,
     this.showEditButton = true,
+    this.showCheckbox = true, // 기본값 true
   }) : super(key: key);
 
   void _confirmDelete(BuildContext context) {
@@ -51,12 +53,13 @@ class TodoItem extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Checkbox(
-              value: todo.isDone,
-              onChanged: onToggle != null
-                  ? (value) => onToggle!()
-                  : null, // Disable checkbox if onToggle is null
-            ),
+            if (showCheckbox) // showCheckbox가 true일 때만 체크박스를 표시
+              Checkbox(
+                value: todo.isDone,
+                onChanged: onToggle != null
+                    ? (value) => onToggle!()
+                    : null, // Disable checkbox if onToggle is null
+              ),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

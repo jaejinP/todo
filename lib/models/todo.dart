@@ -73,7 +73,6 @@ class TodoModel extends ChangeNotifier {
     tz.initializeTimeZones();
     _loadTodos();
     _initializeRepeatingTodos();
-    _startPeriodicUpdate();
   }
 
   List<Todo> get todos => _todos;
@@ -150,12 +149,11 @@ class TodoModel extends ChangeNotifier {
   void _initializeRepeatingTodos() {
     Timer.periodic(Duration(minutes: 1), (timer) {
       final now = DateTime.now();
-      for (int i = 0; i < _todos.length; i++) {
-        final todo = _todos[i];
+      for (final todo in _todos) {
         if (todo.isRepeatingDaily && todo.dateTime.isBefore(now) && !todo.isDone) {
           final newDateTime = todo.dateTime.add(Duration(days: 1));
-          _todos[i] = todo.copyWith(dateTime: newDateTime, isDone: false);
-          _scheduleNotification(_todos[i], isNew: true);
+          _todos[_todos.indexOf(todo)] = todo.copyWith(dateTime: newDateTime, isDone: false);
+          _scheduleNotification(_todos[_todos.indexOf(todo)], isNew: true);
         }
       }
       _saveTodos();
@@ -163,11 +161,31 @@ class TodoModel extends ChangeNotifier {
     });
   }
 
+  Future<void> requestNotificationPermissions() async {
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+
+    final IOSInitializationSettings initializationSettingsIOS =
+        IOSInitializationSettings(
+            requestAlertPermission: true,
+            requestBadgePermission: true,
+            requestSoundPermission: true,
+        );
+
+    final InitializationSettings initializationSettings = InitializationSettings(
+      android: initializationSettingsAndroid,
+      iOS: initializationSettingsIOS,
+    );
+
+    await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+  }
+
   void _scheduleNotification(Todo todo, {bool isNew = false}) async {
-    final notificationId = DateTime.now().millisecondsSinceEpoch.toString().hashCode;
+    final notificationId = todo.id.hashCode & 0x7FFFFFFF;
     final tz.TZDateTime scheduledDate = tz.TZDateTime.from(todo.dateTime, tz.local);
 
-    const AndroidNotificationDetails androidPlatformChannelSpecifics = AndroidNotificationDetails(
+    const AndroidNotificationDetails androidPlatformChannelSpecifics =
+    AndroidNotificationDetails(
       'todo_channel', // channel ID
       'Todo Notifications', // channel name
       channelDescription: 'Notification channel for todo reminders',
@@ -180,17 +198,15 @@ class TodoModel extends ChangeNotifier {
       autoCancel: false,
     );
 
-    const IOSNotificationDetails iOSPlatformChannelSpecifics = IOSNotificationDetails(
+    const IOSNotificationDetails iOSPlatformChannelSpecifics =
+    IOSNotificationDetails(
       presentAlert: true,
       presentBadge: true,
       presentSound: true,
-      sound: "default",
     );
 
-    const NotificationDetails platformChannelSpecifics = NotificationDetails(
-      android: androidPlatformChannelSpecifics,
-      iOS: iOSPlatformChannelSpecifics,
-    );
+    const NotificationDetails platformChannelSpecifics =
+    NotificationDetails(android: androidPlatformChannelSpecifics, iOS: iOSPlatformChannelSpecifics);
 
     await flutterLocalNotificationsPlugin.zonedSchedule(
       notificationId, // Unique ID for the notification
@@ -204,7 +220,8 @@ class TodoModel extends ChangeNotifier {
   }
 
   void _cancelNotification(String id) async {
-    await flutterLocalNotificationsPlugin.cancel(id.hashCode);
+    final notificationId = id.hashCode & 0x7FFFFFFF;
+    await flutterLocalNotificationsPlugin.cancel(notificationId);
   }
 
   void _saveTodos() {
@@ -221,11 +238,5 @@ class TodoModel extends ChangeNotifier {
         _todos.add(Todo.fromJson(json));
       }
     }
-  }
-
-  void _startPeriodicUpdate() {
-    Timer.periodic(Duration(minutes: 1), (timer) {
-      notifyListeners();
-    });
   }
 }
